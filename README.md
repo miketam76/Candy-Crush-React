@@ -1,6 +1,6 @@
-# codemix-vanilla-react
-Template for project creation of React inside CodeMix
+#Candy Crush React Project
+Personal learning project using React w/Codemix with a few modications and bug fixes
+See source below and highly encourage to see other videos from Ania.
 
-## Contents
-
-The template project is just an example Hello World that guide you through the use of React with the Expressjs framework to build a very simple web application that display the Hello World!!! Greeting
+Source: Code with Ania Kubów  
+https://www.youtube.com/watch?v=PBrEq9Wd6_U
