@@ -1,4 +1,4 @@
-#Candy Crush React Project
+<h1>Candy Crush React Project</h1>
 Personal learning project using React w/Codemix with a few modications and bug fixes
 See source below and highly encourage to see other videos from Ania.
 
