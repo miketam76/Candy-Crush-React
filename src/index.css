@@ -1,7 +1,8 @@
 .app {
 	display: grid;
 	grid-template-rows: 50px 1fr;
-	width: 600px;
+	width: 100%;
+	max-width: 1028px;
 	height: auto;
 
 	/* Glass effect */
@@ -15,9 +16,11 @@
 
 .score-board-container {
 	display: flex;
+	width: 100%;
 	align-items: center;
 	justify-content: center;
 	background-color: rgba(82, 52, 235, 0.3);
+	box-sizing: border-box;;
 }
 
 .score-board-container > p {
@@ -27,15 +30,16 @@
 }
 
 .game {
-	width: 560px;
-	height: 560px;
-	/*display: flex;*/
-	/*flex-wrap: wrap;*/
+	width: 100%;
+	height: 100%;
 	display: grid;
-	grid-template-columns: repeat(8, 70px);
-	grid-template-rows: repeat(8, 70px);
+	gap: 4px;
+	grid-template-columns: repeat(8, 1fr);
+	grid-template-rows: repeat(8, 1fr);
 	background-color: rgba(82, 52, 235, 0.5);
+	aspect-ratio: 1 / 1;
 	padding: 20px;
+	box-sizing: border-box;
 }
 
 /*.game img {*/
@@ -44,8 +48,8 @@
 /*}*/
 
 .candy {
-	width: 70px;   /* game board width / 8 */
-	height: 70px;  /* game board height / 8 */
+	width: 100%;   /* game board width / 8 */
+	height: 100%;  /* game board height / 8 */
 	transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -66,4 +70,16 @@
 	0% { box-shadow: 0 0 5px rgba(0,0,255,0.6); }
 	50% { box-shadow: 0 0 15px rgba(0,0,255,0.9); }
 	100% { box-shadow: 0 0 5px rgba(0,0,255,0.6); }
+}
+
+/* MOBILE ADJUSTMENTS */
+@media screen and (max-width: 400px) {
+	.score-board-container {
+		font-size: 1rem;
+	}
+
+	.game {
+		padding: 10px;
+		border-radius: 10px;
+	}
 }
