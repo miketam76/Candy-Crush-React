@@ -26,6 +26,7 @@ const App = () => {
 			const columnOfFour = [i, i + width, i + width * 2, i + width * 3]
 			const decidedColor = board[i]
 			if (decidedColor === blank) continue
+
 			if (columnOfFour.every(square => board[square] === decidedColor)) {
 				setScoreDisplay(score => score + 4)
 				const newBoard = [...board]
@@ -41,8 +42,8 @@ const App = () => {
 			const rowOfFour = [i, i + 1, i + 2, i + 3]
 			const decidedColor = board[i]
 			const notValid = [5,6,7,13,14,15,21,22,23,29,30,31,37,38,39,45,46,47,53,54,55,62,63,64]
-			if (notValid.includes(i)) continue
-			if (decidedColor === blank) continue
+			if (decidedColor === blank || notValid.includes(i)) continue
+
 			if (rowOfFour.every(square => board[square] === decidedColor)) {
 				setScoreDisplay(score => score + 4)
 				const newBoard = [...board]
@@ -58,6 +59,7 @@ const App = () => {
 			const columnOfThree = [i, i + width, i + width * 2]
 			const decidedColor = board[i]
 			if (decidedColor === blank) continue
+
 			if (columnOfThree.every(square => board[square] === decidedColor)) {
 				setScoreDisplay(score => score + 3)
 				const newBoard = [...board]
@@ -71,10 +73,10 @@ const App = () => {
 	const checkForRowOfThree = (board) => {
 		for (let i = 0; i < 64; i++) {
 			const rowOfThree = [i, i + 1, i + 2]
-			const notValid = [6,7,14,15,22,23,30,31,38,39,46,47,54,55,63,64]
 			const decidedColor = board[i]
-			if (notValid.includes(i)) continue
-			if (decidedColor === blank) continue
+			const notValid = [6,7,14,15,22,23,30,31,38,39,46,47,54,55,63,64]
+			if (decidedColor === blank || notValid.includes(i)) continue
+
 			if (rowOfThree.every(square => board[square] === decidedColor)) {
 				setScoreDisplay(score => score + 3)
 				const newBoard = [...board]
@@ -109,30 +111,57 @@ const App = () => {
 
 	const dragDrop = (e) => {
 		setSquareBeingReplaced(e.target)
-		setTargetId(parseInt(e.target.getAttribute('data-id')))
 	}
 
-	const dragEnd = () => {
-		if (!squareBeingDragged || !squareBeingReplaced) return
+	// ---------- Drag End with Immediate Update ----------
+	const [touchStartPos, setTouchStartPos] = useState(null)
+	const touchStart = (e, index) => {
+		setSquareBeingDragged(e.target)
+		setDraggedId(index)
+		const touch = e.touches[0]
+		setTouchStartPos({ x: touch.clientX, y: touch.clientY })
+	}
+
+	const touchMove = (e) => {
+		if (!touchStartPos) return
+		const touch = e.touches[0]
+		const deltaX = touch.clientX - touchStartPos.x
+		const deltaY = touch.clientY - touchStartPos.y
+
+		// Determine swipe direction
+		if (Math.abs(deltaX) > Math.abs(deltaY)) {
+			// horizontal swipe
+			setTargetId(deltaX > 0 ? draggedId + 1 : draggedId - 1)
+		} else {
+			// vertical swipe
+			setTargetId(deltaY > 0 ? draggedId + width : draggedId - width)
+		}
+	}
+
+	const touchEnd = () => {
+		if (squareBeingDragged && targetId != null) {
+			setSquareBeingReplaced(document.querySelector(`[data-id='${targetId}']`))
+			dragEndImmediate()
+		}
+		setTouchStartPos(null)
+	}
+
+	const dragEndImmediate = () => {
+		if (!squareBeingDragged || !squareBeingReplaced) {
+			setDraggedId(null)
+			setTargetId(null)
+			return
+		}
 
 		const draggedIndex = parseInt(squareBeingDragged.getAttribute('data-id'))
 		const replacedIndex = parseInt(squareBeingReplaced.getAttribute('data-id'))
 
-		const validMoves = [draggedIndex - 1, draggedIndex + 1, draggedIndex - width, draggedIndex + width]
-		const validMove = validMoves.includes(replacedIndex)
-
-		if (!validMove) {
-			// revert immediately
-			setDraggedId(null)
-			setTargetId(null)
-			setSquareBeingDragged(null)
-			setSquareBeingReplaced(null)
-			return
-		}
-
 		const newBoard = [...currentColorArrangement]
 		newBoard[replacedIndex] = squareBeingDragged.getAttribute('src')
 		newBoard[draggedIndex] = squareBeingReplaced.getAttribute('src')
+
+		const validMoves = [draggedIndex - 1, draggedIndex + 1, draggedIndex - width, draggedIndex + width]
+		const validMove = validMoves.includes(replacedIndex)
 
 		let checkedBoard = [...newBoard]
 		checkedBoard = checkForColumnOfFour(checkedBoard)
@@ -141,11 +170,9 @@ const App = () => {
 		checkedBoard = checkForRowOfThree(checkedBoard)
 		checkedBoard = moveIntoSquareBelow(checkedBoard)
 
-		// Only accept move if it creates a match
-		if (JSON.stringify(newBoard) !== JSON.stringify(checkedBoard)) {
+		if (validMove && JSON.stringify(newBoard) !== JSON.stringify(checkedBoard)) {
 			setCurrentColorArrangement(checkedBoard)
 		} else {
-			// revert move
 			setCurrentColorArrangement([...currentColorArrangement])
 		}
 
@@ -159,13 +186,17 @@ const App = () => {
 	const createBoard = () => {
 		const randomColorArrangement = []
 		for (let i = 0; i < width * width; i++) {
-			randomColorArrangement.push(candyColors[Math.floor(Math.random() * candyColors.length)])
+			const randomColor = candyColors[Math.floor(Math.random() * candyColors.length)]
+			randomColorArrangement.push(randomColor)
 		}
 		setCurrentColorArrangement(randomColorArrangement)
 	}
 
-	useEffect(() => { createBoard() }, [])
+	useEffect(() => {
+		createBoard()
+	}, [])
 
+	// Interval for automatic moves
 	useEffect(() => {
 		const timer = setInterval(() => {
 			if (!squareBeingDragged) {
@@ -177,14 +208,14 @@ const App = () => {
 				newBoard = moveIntoSquareBelow(newBoard)
 				setCurrentColorArrangement(newBoard)
 			}
-		}, 100)
+		}, 100) // can reduce to 30 for faster updates
 		return () => clearInterval(timer)
 	}, [currentColorArrangement, squareBeingDragged])
 
 	return (
 		<div className="app">
 			<div className="score-board-container">
-				<p>SCORE:</p>
+				<p>SCORE: </p>
 				<ScoreBoard score={scoreDisplay} />
 			</div>
 
@@ -193,16 +224,20 @@ const App = () => {
 					<img
 						key={index}
 						src={candyColor}
-						alt="candy"
+						alt={candyColor}
 						data-id={index}
 						draggable={true}
+						onTouchStart={(e) => touchStart(e, index)}
+						onTouchMove={touchMove}
+						onTouchEnd={touchEnd}
 						onDragStart={dragStart}
 						onDragOver={(e) => { e.preventDefault(); setTargetId(index) }}
 						onDrop={dragDrop}
-						onDragEnd={dragEnd}
+						onDragEnd={dragEndImmediate}
 						className={
 							draggedId === index ? "candy dragged" :
-								targetId === index ? "candy target" : "candy"
+								targetId === index ? "candy target" :
+									"candy"
 						}
 					/>
 				))}
